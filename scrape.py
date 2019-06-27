@@ -5,7 +5,7 @@ from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 from enum import Enum
-from numpy import array, sum, savetxt, zeros, arange
+from numpy import array, sum, savetxt, loadtxt, zeros, arange, vectorize
 from time import sleep
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -25,6 +25,25 @@ class CaseStatus(Enum):
   
   def __repr__(self):
     return str(self.name)
+
+  @classmethod
+  def csv_to_status(self, input):
+    if "RECEIVED" in input:
+      return CaseStatus.RECEIVED
+    elif "APPROVED" in input:
+      return CaseStatus.APPROVED
+    elif "NEW_CARD" in input:
+      return CaseStatus.NEW_CARD
+    elif "MAILED" in input:
+      return CaseStatus.MAILED
+    elif "USPS_PICKED" in input:
+      return CaseStatus.USPS_PICKED
+    elif "DELIVERED" in input:
+      return CaseStatus.DELIVERED
+    elif "UNKNOWN" in input:
+      return CaseStatus.UNKNOWN
+    else:
+      return CaseStatus.UNKNOWN
 
   @classmethod
   def string_to_status(self, input):
@@ -116,21 +135,6 @@ def construct_num(num: int) -> str:
   """
   return 'YSC1990%d' % (num)
 
-def print_stats(data: array) -> None:
-  """
-  Prints the aggregate statistics from the data in the given numpy array.
-  """
-  print('***** Stats *****')
-  todate = datetime.today().strftime('%Y-%b-%d')
-  print('Date: {0}'.format(todate))
-  print('Unprocessed: {0}'.format(sum(data == CaseStatus.RECEIVED)))
-  print('New Card: {0}'.format(sum(data == CaseStatus.NEW_CARD)))
-  print('Approved: {0}'.format(sum(data == CaseStatus.APPROVED)))
-  print('Mailed: {0}'.format(sum(data == CaseStatus.MAILED)))
-  print('Delivered: {0}'.format(sum(data == CaseStatus.DELIVERED)))
-  print('Picked By USPS: {0}'.format(sum(data == CaseStatus.USPS_PICKED)))
-  print('Unknown: {0}'.format(sum(data == CaseStatus.UNKNOWN)))
-
 def save_data(start: int, end: int, data: array) -> None:
   """
   Save raw data to a CSV file for later use.
@@ -141,6 +145,35 @@ def save_data(start: int, end: int, data: array) -> None:
   result['status'] = data
   savetxt(filename, result, header='AppReceiptNum, CaseStatus',
           delimiter=',', fmt='%d, %s')
+
+def load_data(filename: str) -> (int, int, array):
+  """
+  Reads raw data from the given CSV file and returns the range (start, end) of
+  application receipt numbers and the case status array
+  """
+  to_status = lambda item: CaseStatus.csv_to_status(item)
+  result = loadtxt(filename, delimiter=',', skiprows=1,
+                   dtype={'names': ('appNum', 'status'),
+                          'formats': ('i', 'U12')})
+  return (min(result['appNum']), max(result['appNum']),
+          vectorize(to_status)(result['status']))
+
+def print_stats(start: int, end: int, save: bool, data: array) -> None:
+  """
+  Prints the aggregate statistics from the data in the given numpy array.
+  """
+  if save:
+    save_data(start, end, data)
+  print('***** Stats *****')
+  todate = datetime.today().strftime('%Y-%b-%d')
+  print('Date: {0}'.format(todate))
+  print('Unprocessed: {0}'.format(sum(data == CaseStatus.RECEIVED)))
+  print('New Card: {0}'.format(sum(data == CaseStatus.NEW_CARD)))
+  print('Approved: {0}'.format(sum(data == CaseStatus.APPROVED)))
+  print('Mailed: {0}'.format(sum(data == CaseStatus.MAILED)))
+  print('Delivered: {0}'.format(sum(data == CaseStatus.DELIVERED)))
+  print('Picked By USPS: {0}'.format(sum(data == CaseStatus.USPS_PICKED)))
+  print('Unknown: {0}'.format(sum(data == CaseStatus.UNKNOWN)))
 
 def main() -> None:
   """
@@ -155,16 +188,19 @@ def main() -> None:
                       help='Num of receipts to query from starting point (default: 1000)')
   parser.add_argument('--save-data', action='store_true',
                       help='Save raw data to CSV (default: false)')
+  parser.add_argument('--load-data', metavar='filename.csv', type=str,
+                      help='Load raw data from previously saved CSV file')
   args = parser.parse_args()
   start = args.start_range
   end = args.start_range + args.num_elts
   result = []
-  for i in tqdm(range(start, end)):
-    result.append(get_receipt_status(construct_num(i)))
-    sleep(WAIT_TIME)
-  if args.save_data:
-    save_data(start, end, array(result))
-  print_stats(array(result))
+  if args.load_data:
+    (start, end, result) = load_data(args.load_data)
+  else:
+    for i in tqdm(range(start, end)):
+      result.append(get_receipt_status(construct_num(i)))
+      sleep(WAIT_TIME)
+  print_stats(start, end, args.save_data, array(result))
 
 if __name__ == "__main__":
   main()
