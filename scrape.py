@@ -149,9 +149,9 @@ def main() -> None:
   """
   WAIT_TIME = 0.1
   parser = ArgumentParser(description="Get USCIS data")
-  parser.add_argument('--start-range', default=197000, type=int, nargs='?',
+  parser.add_argument('--start-range', default=197000, type=int, nargs=1,
                       help='Starting point of the query (default: 197000)')
-  parser.add_argument('--num-elts', default=1000, type=int, nargs='?',
+  parser.add_argument('--num-elts', default=1000, type=int, nargs=1,
                       help='Num of receipts to query from starting point (default: 1000)')
   parser.add_argument('--save-data', action='store_true',
                       help='Save raw data to CSV (default: false)')
