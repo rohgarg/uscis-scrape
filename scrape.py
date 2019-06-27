@@ -158,6 +158,39 @@ def load_data(filename: str) -> (int, int, array):
   return (min(result['appNum']), max(result['appNum']),
           vectorize(to_status)(result['status']))
 
+def are_comparable(res1: array, res2: array) -> bool:
+  """
+  Returns True if two given result arrays are comparable, False otherwise.
+  Two arrays are comparable if their minimum and maximum match and they are of
+  the same length.
+  """
+  return min(res1['appNum']) == min(res2['appNum']) and \
+         max(res1['appNum']) == max(res2['appNum']) and \
+         len(res1['appNum']) == len(res2['appNum'])
+
+def compare_data(filenames: [str]) -> None:
+  """
+  Reads raw data from the two given CSV files, compares the data, and
+  prints the list of applications that have changed status
+  """
+  result1 = loadtxt(filenames[0], delimiter=',', skiprows=1,
+                    dtype={'names': ('appNum', 'status'),
+                           'formats': ('i', 'U12')})
+  result2 = loadtxt(filenames[1], delimiter=',', skiprows=1,
+                    dtype={'names': ('appNum', 'status'),
+                           'formats': ('i', 'U12')})
+
+  if (are_comparable(result1, result2)):
+    log_error("The two files ({} and {}) are not comparable."
+              .format(filenames[0], filenames[1]))
+    return
+
+  print("{:<8}  {:<17} {}".format("App #", "Old Status", "New Status"))
+  print("--------------------------------------")
+  for (app, res1, res2) in zip(result1['appNum'], result1['status'], result2['status']):
+    if res1 != res2:
+      print("{:<7} : {:<13} --> {}".format(app, res1, res2))
+
 def print_stats(start: int, end: int, save: bool, data: array) -> None:
   """
   Prints the aggregate statistics from the data in the given numpy array.
@@ -190,12 +223,17 @@ def main() -> None:
                       help='Save raw data to CSV (default: false)')
   parser.add_argument('--load-data', metavar='filename.csv', type=str,
                       help='Load raw data from previously saved CSV file')
+  parser.add_argument('--compare-data', type=str, nargs=2,
+                      help='Compare data from previously saved CSV files')
   args = parser.parse_args()
   start = args.start_range
   end = args.start_range + args.num_elts
   result = []
   if args.load_data:
     (start, end, result) = load_data(args.load_data)
+  elif args.compare_data:
+    compare_data(args.compare_data)
+    return
   else:
     for i in tqdm(range(start, end)):
       result.append(get_receipt_status(construct_num(i)))
