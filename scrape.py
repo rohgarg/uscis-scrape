@@ -5,7 +5,7 @@ from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 from enum import Enum
-from numpy import array, sum
+from numpy import array, sum, savetxt, zeros, arange
 from time import sleep
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -19,6 +19,29 @@ class CaseStatus(Enum):
   MAILED = 4,
   USPS_PICKED = 5,
   DELIVERED = 6,
+
+  def __str__(self):
+    return str(self.name)
+  
+  def __repr__(self):
+    return str(self.name)
+
+  @classmethod
+  def string_to_status(self, input):
+    if "Case Was Received" in input:
+      return CaseStatus.RECEIVED
+    elif "Approved" in input:
+      return CaseStatus.APPROVED
+    elif "New Card Is Being Produced" in input:
+      return CaseStatus.NEW_CARD
+    elif "Card Was Mailed To Me" in input:
+      return CaseStatus.MAILED
+    elif "Card Was Picked Up" in input:
+      return CaseStatus.USPS_PICKED
+    elif "Card Was Delivered" in input:
+      return CaseStatus.DELIVERED
+    else:
+      return CaseStatus.UNKNOWN
 
 def simple_post(url: str, params: set, header: set):
   """
@@ -62,20 +85,7 @@ def raw_to_status(headers) -> CaseStatus:
   TODO: Improve parsing and handle more cases
   """
   for header in headers:
-    if "Case Was Received" in header.text:
-      return CaseStatus.RECEIVED
-    elif "Approved" in header.text:
-      return CaseStatus.APPROVED
-    elif "New Card Is Being Produced" in header.text:
-      return CaseStatus.NEW_CARD
-    elif "Card Was Mailed To Me" in header.text:
-      return CaseStatus.MAILED
-    elif "Card Was Picked Up" in header.text:
-      return CaseStatus.USPS_PICKED
-    elif "Card Was Delivered" in header.text:
-      return CaseStatus.DELIVERED
-    else:
-      return CaseStatus.UNKNOWN
+    return CaseStatus.string_to_status(header.text)
 
 def get_receipt_status(receipt_num: str) -> CaseStatus:
   """
@@ -121,6 +131,17 @@ def print_stats(data: array) -> None:
   print('Picked By USPS: {0}'.format(sum(data == CaseStatus.USPS_PICKED)))
   print('Unknown: {0}'.format(sum(data == CaseStatus.UNKNOWN)))
 
+def save_data(start: int, end: int, data: array) -> None:
+  """
+  Save raw data to a CSV file for later use.
+  """
+  filename = datetime.today().strftime('%Y-%b-%d-%H-%M-%S.csv')
+  result = zeros(data.size, dtype=[('appNum', int), ('status', 'U12')])
+  result['appNum'] = arange(start, end)
+  result['status'] = data
+  savetxt(filename, result, header='AppReceiptNum, CaseStatus',
+          delimiter=',', fmt='%d, %s')
+
 def main() -> None:
   """
   Parses command-line arguments, fetches the USCIS data, and prints the
@@ -128,10 +149,12 @@ def main() -> None:
   """
   WAIT_TIME = 0.1
   parser = ArgumentParser(description="Get USCIS data")
-  parser.add_argument('--start_range', default=197000, type=int, nargs='?',
+  parser.add_argument('--start-range', default=197000, type=int, nargs='?',
                       help='Starting point of the query (default: 197000)')
-  parser.add_argument('--num_elts', default=1000, type=int, nargs='?',
+  parser.add_argument('--num-elts', default=1000, type=int, nargs='?',
                       help='Num of receipts to query from starting point (default: 1000)')
+  parser.add_argument('--save-data', action='store_true',
+                      help='Save raw data to CSV (default: false)')
   args = parser.parse_args()
   start = args.start_range
   end = args.start_range + args.num_elts
@@ -139,6 +162,8 @@ def main() -> None:
   for i in tqdm(range(start, end)):
     result.append(get_receipt_status(construct_num(i)))
     sleep(WAIT_TIME)
+  if args.save_data:
+    save_data(start, end, array(result))
   print_stats(array(result))
 
 if __name__ == "__main__":
