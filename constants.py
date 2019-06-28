@@ -1,0 +1,4 @@
+START = None
+END = None
+RESULTS = []
+WAIT_TIME = 0.1
