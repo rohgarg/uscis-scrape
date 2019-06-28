@@ -5,7 +5,7 @@ from time import sleep
 from tqdm import tqdm
 from argparse import ArgumentParser
 from casestatus import CaseStatus
-from constants import START, END, RESULTS, WAIT_TIME
+from constants import *
 from commonutils import log_error, construct_app_num, install_sighandler
 from datautils import save_data, load_data, compare_data, print_stats
 from scrapeuscis import get_receipt_status
@@ -18,18 +18,21 @@ def main() -> None:
   Parses command-line arguments, fetches the USCIS data, and prints the
   aggregate statistics.
   """
-  global WAIT_TIME, START, END, RESULTS, CKPT_IDX, SAVE_DATA
+  global CKPT_IDX, SAVE_DATA
 
   parser = ArgumentParser(description="Get USCIS data")
-  parser.add_argument('--start-range', default=197000, type=int,
-                      help='Starting point of the query (default: 197000)')
-  parser.add_argument('--num-elts', default=1000, type=int,
-                      help='Num of receipts to query from starting point (default: 1000)')
+  parser.add_argument('--start-range', default=DEFAULT_START_RANGE, type=int,
+                      help='Starting point of the query (default: {})'
+                           .format(DEFAULT_START_RANGE))
+  parser.add_argument('--num-elts', default=DEFAULT_NUM_ELTS, type=int,
+                      help='Num of receipts to query from starting point (default: {})'
+                           .format(DEFAULT_NUM_ELTS))
   parser.add_argument('--save-data', action='store_true',
                       help='Save raw data to CSV (default: false)')
   parser.add_argument('--load-data', metavar='filename.csv', type=str,
                       help='Load raw data from previously saved CSV file')
-  parser.add_argument('--compare-data', type=str, nargs=2,
+  parser.add_argument('--compare-data', metavar=('oldfile.csv', 'newfile.csv'),
+                      type=str, nargs=2,
                       help='Compare data from previously saved CSV files')
   args = parser.parse_args()
   install_sighandler(exit_gracefully)
