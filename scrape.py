@@ -10,6 +10,14 @@ from time import sleep
 from tqdm import tqdm
 from argparse import ArgumentParser
 from datetime import datetime
+from signal import getsignal, signal, SIGINT
+from sys import exit
+
+ORIGINAL_SIGINT = None
+START = None
+END = None
+RESULTS = []
+WAIT_TIME = 0.1
 
 class CaseStatus(Enum):
   UNKNOWN = 0,
@@ -208,12 +216,32 @@ def print_stats(start: int, end: int, save: bool, data: array) -> None:
   print('Picked By USPS: {0}'.format(sum(data == CaseStatus.USPS_PICKED)))
   print('Unknown: {0}'.format(sum(data == CaseStatus.UNKNOWN)))
 
+def exit_gracefully(signum, frame) -> None:
+  """
+  Signal handler for SIGINT (^C); prints the statistics so far and kills
+  the program.
+  """
+  global ORIGINAL_SIGINT, START, END, RESULTS
+  signal(SIGINT, ORIGINAL_SIGINT)
+  if START != None and END != None and len(RESULTS) > 0:
+    print_stats(START, END, False, array(RESULTS))
+  exit(0)
+
+def install_sighandler() -> None:
+  """
+  Sets up the signal handler for SIGINT (^C)
+  """
+  global ORIGINAL_SIGINT
+  ORIGINAL_SIGINT = getsignal(SIGINT)
+  signal(SIGINT, exit_gracefully)
+
 def main() -> None:
   """
   Parses command-line arguments, fetches the USCIS data, and prints the
   aggregate statistics.
   """
-  WAIT_TIME = 0.1
+  global WAIT_TIME, ORIGINAL_SIGINT, START, END, RESULTS
+
   parser = ArgumentParser(description="Get USCIS data")
   parser.add_argument('--start-range', default=197000, type=int,
                       help='Starting point of the query (default: 197000)')
@@ -226,19 +254,19 @@ def main() -> None:
   parser.add_argument('--compare-data', type=str, nargs=2,
                       help='Compare data from previously saved CSV files')
   args = parser.parse_args()
-  start = args.start_range
-  end = args.start_range + args.num_elts
-  result = []
+  install_sighandler()
+  START = args.start_range
+  END = args.start_range + args.num_elts
   if args.load_data:
-    (start, end, result) = load_data(args.load_data)
+    (START, END, RESULTS) = load_data(args.load_data)
   elif args.compare_data:
     compare_data(args.compare_data)
     return
   else:
-    for i in tqdm(range(start, end)):
-      result.append(get_receipt_status(construct_num(i)))
+    for i in tqdm(range(START, END)):
+      RESULTS.append(get_receipt_status(construct_num(i)))
       sleep(WAIT_TIME)
-  print_stats(start, end, args.save_data, array(result))
+  print_stats(START, END, args.save_data, array(RESULTS))
 
 if __name__ == "__main__":
   main()
