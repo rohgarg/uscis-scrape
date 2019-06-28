@@ -18,7 +18,7 @@ def main() -> None:
   Parses command-line arguments, fetches the USCIS data, and prints the
   aggregate statistics.
   """
-  global CKPT_IDX, SAVE_DATA
+  global START, END, RESULTS, WAIT_TIME, CKPT_IDX, SAVE_DATA
 
   parser = ArgumentParser(description="Get USCIS data")
   parser.add_argument('--start-range', default=DEFAULT_START_RANGE, type=int,
