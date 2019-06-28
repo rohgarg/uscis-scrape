@@ -180,7 +180,7 @@ def compare_data(filenames: [str]) -> None:
                     dtype={'names': ('appNum', 'status'),
                            'formats': ('i', 'U12')})
 
-  if (are_comparable(result1, result2)):
+  if not(are_comparable(result1, result2)):
     log_error("The two files ({} and {}) are not comparable."
               .format(filenames[0], filenames[1]))
     return
