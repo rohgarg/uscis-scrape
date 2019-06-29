@@ -5,11 +5,11 @@
 Run the program as:
 
 ```bash
-$ ./scrape --save-data
+$ ./main.py --save-data
 ```
 
 To show all the options, run:
 
 ```bash
-$ ./scrape --help
+$ ./main.py --help
 ```
