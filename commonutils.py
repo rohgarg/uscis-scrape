@@ -2,9 +2,8 @@
 
 from signal import getsignal, signal, SIGINT
 from sys import exit, stderr
-from numpy import array
 
-def log_error(msg):
+def log_error(msg: str) -> None:
   """
   Logs message to stderr
   """

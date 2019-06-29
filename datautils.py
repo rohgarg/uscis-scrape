@@ -4,6 +4,7 @@ from numpy import array, sum, savetxt, loadtxt, zeros, arange, vectorize
 from datetime import datetime
 from commonutils import log_error
 from casestatus import CaseStatus
+from typing import Tuple, List
 
 def save_data(start: int, end: int, data: array) -> None:
   """
@@ -16,7 +17,7 @@ def save_data(start: int, end: int, data: array) -> None:
   savetxt(filename, result, header='AppReceiptNum, CaseStatus',
           delimiter=',', fmt='%d, %s')
 
-def load_data(filename: str) -> (int, int, array):
+def load_data(filename: str) -> Tuple[int, int, array]:
   """
   Reads raw data from the given CSV file and returns the range (start, end) of
   application receipt numbers and the case status array
@@ -28,7 +29,7 @@ def load_data(filename: str) -> (int, int, array):
   return (min(result['appNum']), max(result['appNum']),
           vectorize(to_status)(result['status']))
 
-def compare_data(filenames: [str]) -> None:
+def compare_data(filenames: List[str]) -> None:
   """
   Reads raw data from the two given CSV files, compares the data, and
   prints the list of applications that have changed status

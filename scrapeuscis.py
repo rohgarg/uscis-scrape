@@ -6,6 +6,7 @@ from contextlib import closing
 from bs4 import BeautifulSoup
 from commonutils import log_error
 from casestatus import CaseStatus
+from typing import Dict
 
 def get_receipt_status(receipt_num: str) -> CaseStatus:
   """
@@ -29,7 +30,7 @@ def get_receipt_status(receipt_num: str) -> CaseStatus:
   doc = BeautifulSoup(raw_html, 'html.parser')
   return raw_to_status(doc.find_all('h1'))
 
-def simple_post(url: str, params: set, header: set):
+def simple_post(url: str, params: Dict[str, str], header: Dict[str, str]):
   """
   Attempts to get the content at `url` by making an HTTP POST request.
   If the content-type of response is some kind of HTML/XML, return the
@@ -64,3 +65,4 @@ def raw_to_status(headers) -> CaseStatus:
   """
   for header in headers:
     return CaseStatus.string_to_status(header.text)
+  return CaseStatus.UNKNOWN

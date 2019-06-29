@@ -5,7 +5,7 @@ from time import sleep
 from tqdm import tqdm
 from argparse import ArgumentParser
 from casestatus import CaseStatus
-from constants import *
+from constants import START, END, WAIT_TIME, RESULTS, DEFAULT_NUM_ELTS, DEFAULT_START_RANGE
 from commonutils import log_error, construct_app_num, install_sighandler
 from datautils import save_data, load_data, compare_data, print_stats
 from scrapeuscis import get_receipt_status
