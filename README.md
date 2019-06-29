@@ -5,11 +5,11 @@
 Run the program as:
 
 ```bash
-$ ./main.py --save-data
+$ python3 main.py --save-data
 ```
 
 To show all the options, run:
 
 ```bash
-$ ./main.py --help
+$ python3 main.py --help
 ```
