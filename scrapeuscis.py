@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 from requests import post
 from requests.exceptions import RequestException
 from contextlib import closing

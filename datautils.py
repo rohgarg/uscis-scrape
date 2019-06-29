@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 from numpy import array, sum, savetxt, loadtxt, zeros, arange, vectorize
 from datetime import datetime
 from commonutils import log_error

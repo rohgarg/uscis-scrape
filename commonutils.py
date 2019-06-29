@@ -1,14 +1,14 @@
+#!/usr/local/bin/python3
+
 from signal import getsignal, signal, SIGINT
-from sys import exit
+from sys import exit, stderr
 from numpy import array
 
-def log_error(e):
+def log_error(msg):
   """
-  It is always a good idea to log errors.
-  This function just prints them, but you can
-  make it do anything.
+  Logs message to stderr
   """
-  print(e)
+  print(msg, file=stderr)
 
 def construct_app_num(num: int) -> str:
   """

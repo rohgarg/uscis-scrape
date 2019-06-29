@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 DEFAULT_START_RANGE=190000
 DEFAULT_NUM_ELTS=1000
 START = None
