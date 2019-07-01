@@ -2,6 +2,7 @@
 
 from signal import getsignal, signal, SIGINT
 from sys import exit, stderr
+from constants import APP_PREFIX
 
 def log_error(msg: str) -> None:
   """
@@ -14,7 +15,7 @@ def construct_app_num(num: int) -> str:
   Returns the application receipt number string for the given application
   number (Integer).
   """
-  return 'YSC1990%d' % (num)
+  return '{}{}'.format(APP_PREFIX, num)
 
 def install_sighandler(handler) -> None:
   """

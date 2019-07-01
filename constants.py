@@ -9,3 +9,4 @@ START: int = 0
 END: int = 0
 RESULTS: List[CaseStatus] = []
 WAIT_TIME: float = 0.1
+APP_PREFIX: str = 'YSC1990'
