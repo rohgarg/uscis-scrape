@@ -2,7 +2,7 @@
 
 from numpy import array, sum, savetxt, loadtxt, zeros, arange, vectorize
 from datetime import datetime
-from commonutils import log_error
+from commonutils import construct_app_num, log_error
 from casestatus import CaseStatus
 from typing import Tuple, List
 
@@ -46,11 +46,11 @@ def compare_data(filenames: List[str]) -> None:
               .format(filenames[0], filenames[1]))
     return
 
-  print("{:<8}  {:<17} {}".format("App #", "Old Status", "New Status"))
-  print("--------------------------------------")
+  print("{:<15}  {:<17} {}".format("App #", "Old Status", "New Status"))
+  print("---------------------------------------------")
   for (app, res1, res2) in zip(result1['appNum'], result1['status'], result2['status']):
     if res1 != res2:
-      print("{:<7} : {:<13} --> {}".format(app, res1, res2))
+      print("{:<9} : {:<13} --> {}".format(construct_app_num(app), res1, res2))
 
 def print_stats(start: int, end: int, save: bool, data: array) -> None:
   """
