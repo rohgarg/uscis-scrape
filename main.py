@@ -31,8 +31,8 @@ def main() -> None:
                       help='Save raw data to CSV (default: false)')
   parser.add_argument('--load-data', metavar='filename.csv', type=str,
                       help='Load raw data from previously saved CSV file')
-  parser.add_argument('--compare-data', metavar=('oldfile.csv', 'newfile.csv'),
-                      type=str, nargs=2,
+  parser.add_argument('--compare-data', metavar='filename.csv',
+                      type=str, nargs='+',
                       help='Compare data from previously saved CSV files')
   args = parser.parse_args()
   install_sighandler(exit_gracefully)

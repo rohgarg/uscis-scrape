@@ -5,6 +5,9 @@ from datetime import datetime
 from commonutils import construct_app_num, log_error
 from casestatus import CaseStatus
 from typing import Tuple, List
+from functools import reduce
+from os.path import basename
+from itertools import tee
 
 def save_data(start: int, end: int, data: array) -> None:
   """
@@ -31,26 +34,40 @@ def load_data(filename: str) -> Tuple[int, int, array]:
 
 def compare_data(filenames: List[str]) -> None:
   """
-  Reads raw data from the two given CSV files, compares the data, and
+  Reads raw data from the given CSV files (at least 2), compares the data, and
   prints the list of applications that have changed status
   """
-  result1 = loadtxt(filenames[0], delimiter=',', skiprows=1,
-                    dtype={'names': ('appNum', 'status'),
-                           'formats': ('i', 'U12')})
-  result2 = loadtxt(filenames[1], delimiter=',', skiprows=1,
-                    dtype={'names': ('appNum', 'status'),
-                           'formats': ('i', 'U12')})
-
-  if not(are_comparable(result1, result2)):
-    log_error("The two files ({} and {}) are not comparable."
-              .format(filenames[0], filenames[1]))
+  if len(filenames) < 2:
+    log_error("Specify at least 2 files for comparison.")
     return
 
-  print("{:<15}  {:<17} {}".format("App #", "Old Status", "New Status"))
-  print("---------------------------------------------")
-  for (app, res1, res2) in zip(result1['appNum'], result1['status'], result2['status']):
-    if res1 != res2:
-      print("{:<9} : {:<13} --> {}".format(construct_app_num(app), res1, res2))
+  results = []
+  for f in filenames:
+    results.append(loadtxt(f, delimiter=',', skiprows=1,
+                           dtype={'names': ('appNum', 'status'),
+                                  'formats': ('i', 'U12')}))
+  for (x, y) in pairwise(results):
+    if not(are_comparable(x, y)):
+      log_error('The files are not comparable.')
+      return
+
+  header = '{:<11}'.format('App #')
+  prepHead = lambda x, y: '{:<16} {:<17}'.format(extract_date_from_filename(x),
+                                                 extract_date_from_filename(y))
+  print(reduce(prepHead, filenames, header))
+  print('-----------' + '------------------' * len(filenames))
+
+  for (i, app) in enumerate(results[0]['appNum']):
+    line = '{:9} : '.format(construct_app_num(app))
+    shouldPrint = False
+    for (x, y) in pairwise(results):
+      if x[i]['status'] != y[i]['status']:
+        line += '{:<13} --> {:<13}'.format(x[i]['status'], y[i]['status'])
+        shouldPrint = True
+      else:
+        break
+    if shouldPrint:
+      print(line)
 
 def print_stats(start: int, end: int, save: bool, data: array) -> None:
   """
@@ -78,3 +95,15 @@ def are_comparable(res1: array, res2: array) -> bool:
   return min(res1['appNum']) == min(res2['appNum']) and \
          max(res1['appNum']) == max(res2['appNum']) and \
          len(res1['appNum']) == len(res2['appNum'])
+
+def extract_date_from_filename(filename: str) -> str:
+  parts = basename(filename).split('-')
+  if len(parts) <= 2:
+    return filename
+  return '{} {}, {}'.format(parts[1], parts[2], parts[0])
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
