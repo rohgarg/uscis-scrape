@@ -58,11 +58,11 @@ def compare_data(filenames: List[str]) -> None:
   print('-----------' + '------------------' * len(filenames))
 
   for (i, app) in enumerate(results[0]['appNum']):
-    line = '{:9} : '.format(construct_app_num(app))
+    line = '{:9} : {:<13}'.format(construct_app_num(app), results[0][i]['status'])
     shouldPrint = False
     for (x, y) in pairwise(results):
       if x[i]['status'] != y[i]['status']:
-        line += '{:<13} --> {:<13}'.format(x[i]['status'], y[i]['status'])
+        line += ' --> {:<13}'.format(y[i]['status'])
         shouldPrint = True
       else:
         break
